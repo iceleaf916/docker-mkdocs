@@ -1,20 +1,63 @@
-name: Deploy MKDocs
+# name: Deploy MKDocs
+
+# on:
+#   push:
+#     branches: [master]
+
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - uses: actions/checkout@v2
+#       - name: Deploy image
+#         run: |
+#           export RELEASE=$(grep "MKDOCS_VERSION=" Dockerfile | sed 's|^.*=||g' |awk '{print $1}' | sed 's|"||g')
+#           docker build . --file Dockerfile --tag iceleaf/mkdocs:${RELEASE}
+#           docker tag iceleaf/mkdocs:${RELEASE} iceleaf/mkdocs:latest
+#           docker login  -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+#           docker push iceleaf/mkdocs:${RELEASE}
+#           docker push iceleaf/mkdocs:latest
+name: Build and Push Multi-Arch Docker Images
 
 on:
   push:
-    branches: [master]
+    branches:
+      - main # 在 main 分支推送时触发
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Deploy image
+      # 1. 检出代码
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: set RELEASE
         run: |
           export RELEASE=$(grep "MKDOCS_VERSION=" Dockerfile | sed 's|^.*=||g' |awk '{print $1}' | sed 's|"||g')
-          docker build . --file Dockerfile --tag iceleaf/mkdocs:${RELEASE}
-          docker tag iceleaf/mkdocs:${RELEASE} iceleaf/mkdocs:latest
-          docker login  -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-          docker push iceleaf/mkdocs:${RELEASE}
-          docker push iceleaf/mkdocs:latest
+
+      # 2. 设置 QEMU，以支持其他 CPU 架构的模拟
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      # 3. 安装 Docker Buildx 插件
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # 4. 登录 Docker Hub（或你使用的镜像仓库）
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }} # Docker Hub 用户名
+          password: ${{ secrets.DOCKER_PASSWORD }} # Docker Hub 密码（在 GitHub secrets 中配置）
+
+      # 5. 构建并推送多架构镜像
+      - name: Build and push multi-arch image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: iceleaf/mkdocs:${RELEASE} # 替换为你的镜像仓库和标签
+          platforms: linux/amd64,linux/arm64 # 目标架构列表
