@@ -23,7 +23,8 @@ RUN \
     python3-dev \
     py3-pip \
     build-base && \
-    pip install --upgrade pip && \
+    pip install --upgrade pip -i https://mirrors.aliyun.com/pypi/simple && \
+    pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
     pip install mkdocs==${MKDOCS_VERSION} && \
     cd /bootstrap && pip install -e /bootstrap && \
     rm -rf /tmp/* /var/tmp/* /var/cache/apk/* /var/cache/distfiles/* && \
