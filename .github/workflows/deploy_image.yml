@@ -2,12 +2,10 @@ name: Deploy MKDocs
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
-
   deploy:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -15,8 +13,8 @@ jobs:
       - name: Deploy image
         run: |
           export RELEASE=$(grep "MKDOCS_VERSION=" Dockerfile | sed 's|^.*=||g' |awk '{print $1}' | sed 's|"||g')
-          docker build . --file Dockerfile --tag polinux/mkdocs:${RELEASE}
-          docker tag polinux/mkdocs:${RELEASE} polinux/mkdocs:latest
-          docker login  -u ${{ secrets.DOCKER_HUB_USER }} -p ${{ secrets.DOCKER_HUB_PASS }}
-          docker push polinux/mkdocs:${RELEASE}
-          docker push polinux/mkdocs:latest
+          docker build . --file Dockerfile --tag iceleaf/mkdocs:${RELEASE}
+          docker tag iceleaf/mkdocs:${RELEASE} iceleaf/mkdocs:latest
+          docker login  -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+          docker push iceleaf/mkdocs:${RELEASE}
+          docker push iceleaf/mkdocs:latest
